@@ -1,0 +1,51 @@
+---
+# tasks file for roles/interface
+
+- name: Get current bridge interfaces
+  community.routeros.command:
+    commands:
+      - :foreach i in=[/interface bridge print as-value] do={:put ($i->"name")}
+  register: interface_bridge_current
+
+- name: Creating not existing bridge interfaces
+  ignore_errors: true
+  community.routeros.command:
+    commands: 
+      - /interface bridge add name={{ item.key }}
+  with_dict: "{{ interface_bridge }}"
+  when: item.key not in interface_bridge_current.stdout_lines[0]
+
+- name: Remove not present interface lists
+  ignore_errors: true
+  community.routeros.command:
+    commands: 
+      - /interface bridge remove [find name={{ item }}]
+  with_items: "{{ interface_bridge_current.stdout_lines }}"
+  when: item not in interface_bridge
+
+# Interface lists
+
+- name: Get current interface list from device
+  community.routeros.command:
+    commands:
+      - :foreach i in=[/interface list print as-value] do={:put ($i->"name")}
+  register: interface_list_current
+
+- name: Creating not existing interface lists
+  ignore_errors: true
+  community.routeros.command:
+    commands: 
+      - /interface list add name={{ item.key }}
+  with_dict: "{{ interface_list }}"
+  when: item.key not in interface_list_current.stdout_lines[0]
+
+- name: Remove not present interface lists
+  ignore_errors: true
+  community.routeros.command:
+    commands: 
+      - /interface list remove [find name={{ item }}]
+  with_items: "{{ interface_list_current.stdout_lines }}"
+  when: (item not in interface_list) and
+        (item != "all") and
+        (item != "none") and
+        (item != "dynamic")

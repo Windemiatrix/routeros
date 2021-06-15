@@ -1,0 +1,50 @@
+---
+# tasks file for ansible/roles/users
+
+- name: Get user accounts
+  community.routeros.command:
+    commands:
+      - |
+        :foreach i in=[/user print as-value] do={
+          :put ($i->"name")
+        }
+  register: users_accounts_current
+
+- name: Creating users
+  no_log: true
+  community.routeros.command:
+    commands: /user add name={{ item.key }} password={{ item.value.password }} group={{ item.value.group }}
+  with_dict: "{{ credentials.users_accounts }}"
+  when: item.key not in users_accounts_current.stdout_lines[0]
+
+- name: Removing users
+  no_log: true
+  community.routeros.command:
+    commands: /user remove [find name={{ item }}]
+  with_items: "{{ users_accounts_current.stdout_lines }}"
+  when: item not in credentials.users_accounts
+
+- name: Check RSA files
+  no_log: true
+  stat:
+    path: "{{ inventory_dir }}/rsa/{{ item.key }}"
+  with_dict: "{{ credentials.users_accounts }}"
+  register: users_accounts_rsa
+
+- name: Put files with RSA keys to devices
+  no_log: true
+  net_put:
+    src: "{{ inventory_dir }}/rsa/{{ item.item.key }}"
+    dest: "/rsa_{{ item.item.key }}"
+    protocol: sftp
+  with_items: "{{ users_accounts_rsa.results }}"
+  when: item.stat.exists
+
+- name: Add RSA keys to users
+  no_log: true
+  community.routeros.command:
+    commands:
+      - "/user ssh-keys import public-key-file=rsa_{{ item.key }} user={{ item.key }}"
+      - "/file remove [find name=rsa_{{ item.key }}]"
+  register: users_accounts_current
+  with_dict: "{{ credentials.users_accounts }}"

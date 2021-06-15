@@ -1,0 +1,11 @@
+[all]
+router_gh ansible_host=10.0.0.20
+router_kv ansible_host=10.0.0.21
+router_up ansible_host=10.0.0.22
+router_kl ansible_host=10.0.0.23
+
+[users]
+router_gh
+router_kv
+router_up
+router_kl

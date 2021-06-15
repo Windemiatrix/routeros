@@ -1,0 +1,11 @@
+---
+- name: Configuring user accounts
+  hosts: users
+  gather_facts: false
+  connection: network_cli
+  vars_files:
+    - "{{ inventory_dir }}/credentials.yml"
+
+  roles:
+
+    - users

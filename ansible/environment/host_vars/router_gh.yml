@@ -1,0 +1,20 @@
+interface:
+  ether2:
+    ip: 91.195.131.50/29
+  LAN_global_bridge:
+    ip: 192.168.57.1/24
+interface_list:
+  LAN:
+    - LAN_global_bridge
+  WAN:
+    - ether2
+  DMZ:
+interface_bridge:
+  LAN_global_bridge:
+    - ether3
+    - ether4
+    - ether5
+    - ether6
+    - ether7
+    - ether8
+    - ether9
